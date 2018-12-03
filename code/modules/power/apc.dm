@@ -85,6 +85,10 @@
 	req_access = list(access_engine_equip)
 	clicksound = "switch"
 	layer = ABOVE_WINDOW_LAYER
+
+	movable_flags = MOVABLE_FLAG_CYBERSPACE
+	cyber_icon_state = "power"
+
 	var/needs_powerdown_sound
 	var/area/area
 	var/areastring = null
@@ -106,7 +110,6 @@
 	var/lastused_charging = 0 // Not an actual channel, and not summed into total. How much battery was recharged, if any, last tick.
 	var/lastused_total = 0
 	var/main_status = 0     // UI var for whether we are getting external power. 0 = no external power at all, 1 = some, but not enough, 2 = getting enough.
-	var/mob/living/silicon/ai/hacker = null // Malfunction var. If set AI hacked the APC and has full control.
 	var/wiresexposed = 0 // whether you can access the wires for hacking or not.
 	powernet = 0		 // set so that APCs aren't found as powernet nodes //Hackish, Horrible, was like this before I changed it :(
 	var/debug= 0         // Legacy debug toggle, left in for admin use.
@@ -195,10 +198,6 @@
 	area.power_environ = 0
 	area.power_change()
 
-	// Malf AI, removes the APC from AI's hacked APCs list.
-	if((hacker) && (hacker.hacked_apcs) && (src in hacker.hacked_apcs))
-		hacker.hacked_apcs -= src
-
 	return ..()
 
 /obj/machinery/power/apc/get_req_access()
@@ -245,8 +244,6 @@
 		else
 			if (stat & MAINT)
 				to_chat(user, "The cover is closed. Something wrong with it: it doesn't work.")
-			else if (hacker && !hacker.hacked_apcs_hidden)
-				to_chat(user, "The cover is locked.")
 			else
 				to_chat(user, "The cover is closed.")
 
@@ -378,7 +375,7 @@
 			update_state |= UPDATE_OPENED1
 		if(opened==2)
 			update_state |= UPDATE_OPENED2
-	else if(emagged || (hacker && !hacker.hacked_apcs_hidden) || failure_timer)
+	else if(emagged || failure_timer)
 		update_state |= UPDATE_BLUESCREEN
 	else if(wiresexposed)
 		update_state |= UPDATE_WIREEXP
@@ -456,7 +453,7 @@
 				update_icon()
 				return TRUE
 
-		if((stat & BROKEN) || (hacker && !hacker.hacked_apcs_hidden))
+		if(stat & BROKEN)
 			to_chat(user, SPAN_WARNING("The cover appears broken or stuck."))
 			return TRUE
 		if(coverlocked && !(stat & MAINT))
@@ -508,8 +505,6 @@
 			to_chat(user, "You must close the panel")
 		else if(stat & (BROKEN|MAINT))
 			to_chat(user, "Nothing happens.")
-		else if(hacker && !hacker.hacked_apcs_hidden)
-			to_chat(user, "<span class='warning'>Access denied.</span>")
 		else
 			if(has_access(req_access, user.GetAccess()) && !isWireCut(APC_WIRE_IDSCAN))
 				locked = !locked
@@ -592,23 +587,19 @@
 			update_icon()
 			return TRUE
 
-		if((stat & BROKEN) || (hacker && !hacker.hacked_apcs_hidden))
+		if(stat & BROKEN)
 			if (has_electronics)
 				to_chat(user, "<span class='warning'>You cannot repair this APC until you remove the electronics still inside.</span>")
 				return TRUE
 
 			user.visible_message("<span class='warning'>[user.name] replaces the damaged APC frame with a new one.</span>",\
 								"You begin to replace the damaged APC frame...")
-			if(do_after(user, 50, src) && opened && !has_electronics && ((stat & BROKEN) || (hacker && !hacker.hacked_apcs_hidden)))
+			if(do_after(user, 50, src) && opened && !has_electronics && ((stat & BROKEN)))
 				user.visible_message(\
 					"<span class='notice'>[user.name] has replaced the damaged APC frame with new one.</span>",\
 					"You replace the damaged APC frame with new one.")
 				qdel(W)
 				set_broken(FALSE)
-				// Malf AI, removes the APC from AI's hacked APCs list.
-				if(hacker && hacker.hacked_apcs && (src in hacker.hacked_apcs))
-					hacker.hacked_apcs -= src
-					hacker = null
 				if (opened==2)
 					opened = 1
 				queue_icon_update()
@@ -616,7 +607,7 @@
 	if((. = ..())) // Further interactions are low priority attack stuff.
 		return
 
-	if (((stat & BROKEN) || (hacker && !hacker.hacked_apcs_hidden)) \
+	if ((stat & BROKEN) \
 			&& !opened \
 			&& W.force >= 5 \
 			&& W.w_class >= 3.0 \
@@ -653,7 +644,7 @@
 // attack with hand - remove cell (if cover open) or interact with the APC
 
 /obj/machinery/power/apc/emag_act(var/remaining_charges, var/mob/user)
-	if (!(emagged || (hacker && !hacker.hacked_apcs_hidden)))		// trying to unlock with an emag card
+	if (!(emagged))		// trying to unlock with an emag card
 		if(opened)
 			to_chat(user, "You must close the cover to swipe an ID card.")
 		else if(wiresexposed)
@@ -808,18 +799,8 @@
 	if(user.lying)
 		to_chat(user, "<span class='warning'>You must stand to use [src]!</span>")
 		return STATUS_CLOSE
-	if(istype(user, /mob/living/silicon))
-		var/permit = 0 // Malfunction variable. If AI hacks APC it can control it even without AI control wire.
-		var/mob/living/silicon/ai/AI = user
-		var/mob/living/silicon/robot/robot = user
-		if(hacker && !hacker.hacked_apcs_hidden)
-			if(hacker == AI)
-				permit = 1
-			else if(istype(robot) && robot.connected_ai && robot.connected_ai == hacker) // Cyborgs can use APCs hacked by their AI
-				permit = 1
-
-		if(aidisabled && !permit)
-			return STATUS_CLOSE
+	if(istype(user, /mob/living/silicon) && aidisabled)
+		return STATUS_CLOSE
 	. = ..()
 	if(user.restrained())
 		to_chat(user, "<span class='warning'>You must have free hands to use [src].</span>")
@@ -1133,16 +1114,6 @@ obj/machinery/power/apc/proc/autoset(var/cur_state, var/on)
 		else 
 			return POWERCHAN_OFF
 
-// Malfunction: Transfers APC under AI's control
-/obj/machinery/power/apc/proc/ai_hack(var/mob/living/silicon/ai/A = null)
-	if(!A || !A.hacked_apcs || hacker || aidisabled || A.stat == DEAD)
-		return 0
-	src.hacker = A
-	A.hacked_apcs += src
-	locked = 1
-	update_icon()
-	return 1
-
 /obj/item/weapon/module/power_control
 	name = "power control module"
 	desc = "Heavy-duty switching circuits for power control."
@@ -1152,14 +1123,5 @@ obj/machinery/power/apc/proc/autoset(var/cur_state, var/on)
 	matter = list(MATERIAL_STEEL = 50, MATERIAL_GLASS = 50)
 	w_class = ITEM_SIZE_SMALL
 	obj_flags = OBJ_FLAG_CONDUCTIBLE
-
-/obj/machinery/power/apc/malf_upgrade(var/mob/living/silicon/ai/user)
-	..()
-	malf_upgraded = 1
-	emp_hardened = 1
-	to_chat(user, "\The [src] has been upgraded. It is now protected against EM pulses.")
-	return 1
-
-
 
 #undef APC_UPDATE_ICON_COOLDOWN

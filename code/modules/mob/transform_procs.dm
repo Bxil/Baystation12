@@ -40,16 +40,16 @@
 	return src
 
 /mob/new_player/AIize()
-	spawning = 1
+	spawning = TRUE
 	return ..()
 
-/mob/living/carbon/human/AIize(move=1) // 'move' argument needs defining here too because BYOND is dumb
+/mob/living/carbon/human/AIize()
 	if (HAS_TRANSFORMATION_MOVEMENT_HANDLER(src))
 		return
 	for(var/t in organs)
 		qdel(t)
 	QDEL_NULL_LIST(worn_underwear)
-	return ..(move)
+	return ..()
 
 /mob/living/carbon/AIize()
 	if (HAS_TRANSFORMATION_MOVEMENT_HANDLER(src))
@@ -61,48 +61,25 @@
 	set_invisibility(101)
 	return ..()
 
-/mob/proc/AIize(move=1)
+/mob/proc/AIize()
 	if(client)
 		sound_to(src, sound(null, repeat = 0, wait = 0, volume = 85, channel = GLOB.lobby_sound_channel))// stop the jams for AIs
 
+	var/datum/cyberspace/C = SScyberspace.get_linked_cyber(get_z(src)) || SScyberspace.get_linked_cyber(GLOB.using_map.station_levels[1])
+	if(!C)
+		CRASH("AI was trying to spawn with no cyberspaces.")
 
-	var/mob/living/silicon/ai/O = new (loc, GLOB.using_map.default_law_type,,1)//No MMI but safety is in effect.
-	O.set_invisibility(0)
-	O.aiRestorePowerRoutine = 0
-	if(mind)
-		mind.transfer_to(O)
-		O.mind.original = O
-	else
-		O.key = key
+	if(!C.exits.len) //This can mean many things, eg. cyberspace is being/has been destroyed.
+		to_chat(src, SPAN_NOTICE("No suitable cyberspace entry found."))
+		return
 
-	if(move)
-		var/obj/loc_landmark
-		for(var/obj/effect/landmark/start/sloc in landmarks_list)
-			if (sloc.name != "AI")
-				continue
-			if ((locate(/mob/living) in sloc.loc) || (locate(/obj/structure/AIcore) in sloc.loc))
-				continue
-			loc_landmark = sloc
-		if (!loc_landmark)
-			for(var/obj/effect/landmark/tripai in landmarks_list)
-				if (tripai.name == "tripai")
-					if((locate(/mob/living) in tripai.loc) || (locate(/obj/structure/AIcore) in tripai.loc))
-						continue
-					loc_landmark = tripai
-		if (!loc_landmark)
-			to_chat(O, "Oh god sorry we can't find an unoccupied AI spawn location, so we're spawning you on top of someone.")
-			for(var/obj/effect/landmark/start/sloc in landmarks_list)
-				if (sloc.name == "AI")
-					loc_landmark = sloc
-		O.forceMove(loc_landmark.loc)
-		O.on_mob_init()
+	var/mob/living/silicon/ai/A = new(get_turf(pick(C.exits)), GLOB.using_map.default_law_type)
+	A.key = key
+	A.on_mob_init()
 
-	O.add_ai_verbs()
-
-	O.rename_self("ai",1)
-	spawn(0)	// Mobs still instantly del themselves, thus we need to spawn or O will never be returned
-		qdel(src)
-	return O
+	A.rename_self("ai", 1)
+	qdel(src)
+	return A
 
 //human -> robot
 /mob/living/carbon/human/proc/Robotize(var/supplied_robot_type = /mob/living/silicon/robot)

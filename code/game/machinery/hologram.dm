@@ -157,33 +157,6 @@ var/const/HOLOPAD_MODE = RANGE_BASED
 /obj/machinery/hologram/holopad/check_eye(mob/user)
 	return 0
 
-/obj/machinery/hologram/holopad/attack_ai(mob/living/silicon/ai/user)
-	if (!istype(user))
-		return
-	/*There are pretty much only three ways to interact here.
-	I don't need to check for client since they're clicking on an object.
-	This may change in the future but for now will suffice.*/
-	if(user.eyeobj && (user.eyeobj.loc != src.loc))//Set client eye on the object if it's not already.
-		user.eyeobj.setLoc(get_turf(src))
-	else if (!allow_ai)
-		to_chat(user, SPAN_WARNING("Access denied."))
-	else if(!masters[user])//If there is no hologram, possibly make one.
-		activate_holo(user)
-	else//If there is a hologram, remove it.
-		clear_holo(user)
-	return
-
-/obj/machinery/hologram/holopad/proc/activate_holo(mob/living/silicon/ai/user)
-	if(!(stat & NOPOWER) && user.eyeobj && user.eyeobj.loc == src.loc)//If the projector has power and client eye is on it
-		if (user.holo)
-			to_chat(user, "<span class='danger'>ERROR:</span> Image feed in progress.")
-			return
-		src.visible_message("A holographic image of [user] flicks to life right before your eyes!")
-		create_holo(user)//Create one.
-	else
-		to_chat(user, "<span class='danger'>ERROR:</span> Unable to project hologram.")
-	return
-
 /obj/machinery/hologram/holopad/proc/activate_holocall(mob/living/carbon/caller_id)
 	if(caller_id)
 		src.visible_message("A holographic image of [caller_id] flicks to life right before your eyes!")
@@ -268,14 +241,6 @@ For the other part of the code, check silicon say.dm. Particularly robot talk.*/
 		var/datum/computer_file/report/crew_record/R = get_crewmember_record(caller_id.name)
 		if(R)
 			hologram.overlays += getHologramIcon(icon(R.photo_front), hologram_color = holopadType) // Add the callers image as an overlay to keep coloration!
-	else if(A)
-		if(holopadType == HOLOPAD_LONG_RANGE)
-			hologram.overlays += A.holo_icon_longrange
-		else
-			hologram.overlays += A.holo_icon // Add the AI's configured holo Icon
-	if(A)
-		if(A.holo_icon_malf == TRUE)
-			hologram.overlays += icon("icons/effects/effects.dmi", "malf-scanline")
 	hologram.mouse_opacity = 0//So you can't click on it.
 	hologram.plane = ABOVE_HUMAN_PLANE
 	hologram.layer = ABOVE_HUMAN_LAYER //Above all the other objects/mobs. Or the vast majority of them.
@@ -286,7 +251,6 @@ For the other part of the code, check silicon say.dm. Particularly robot talk.*/
 		masters[caller_id] = hologram
 	else
 		hologram.SetName("[A.name] (Hologram)") //If someone decides to right click.
-		A.holo = src
 		masters[A] = hologram
 	hologram.set_light(1, 0.1, 2)	//hologram lighting
 	hologram.color = color //painted holopad gives coloured holograms
@@ -297,7 +261,6 @@ For the other part of the code, check silicon say.dm. Particularly robot talk.*/
 /obj/machinery/hologram/holopad/proc/clear_holo(mob/living/silicon/ai/user, mob/living/carbon/caller_id)
 	if(user)
 		qdel(masters[user])//Get rid of user's hologram
-		user.holo = null
 		masters -= user //Discard AI from the list of those who use holopad
 	if(caller_id)
 		qdel(masters[caller_id])//Get rid of user's hologram

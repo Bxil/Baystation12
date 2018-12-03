@@ -22,6 +22,9 @@ var/list/airlock_overlays = list()
 	power_channel = ENVIRON
 	interact_offline = FALSE
 
+	movable_flags = MOVABLE_FLAG_CYBERSPACE
+	cyber_icon_state = "door"
+
 	explosion_resistance = 10
 	var/aiControlDisabled = 0 //If 1, AI control is disabled until the AI hacks back in and disables the lock. If 2, the AI has bypassed the lock. If -1, the control is enabled but the AI had bypassed it earlier, so if it is disabled again the AI would have no trouble getting back in.
 	var/hackProof = 0 // if 1, this door can't be hacked by the AI
@@ -835,54 +838,6 @@ About the new airlock wires panel:
 		ui.open()
 		ui.set_auto_update(1)
 
-/obj/machinery/door/airlock/proc/hack(mob/user as mob)
-	if(src.aiHacking==0)
-		src.aiHacking=1
-		spawn(20)
-			//TODO: Make this take a minute
-			to_chat(user, "Airlock AI control has been blocked. Beginning fault-detection.")
-			sleep(50)
-			if(src.canAIControl())
-				to_chat(user, "Alert cancelled. Airlock control has been restored without our assistance.")
-				src.aiHacking=0
-				return
-			else if(!src.canAIHack(user))
-				to_chat(user, "We've lost our connection! Unable to hack airlock.")
-				src.aiHacking=0
-				return
-			to_chat(user, "Fault confirmed: airlock control wire disabled or cut.")
-			sleep(20)
-			to_chat(user, "Attempting to hack into airlock. This may take some time.")
-			sleep(200)
-			if(src.canAIControl())
-				to_chat(user, "Alert cancelled. Airlock control has been restored without our assistance.")
-				src.aiHacking=0
-				return
-			else if(!src.canAIHack(user))
-				to_chat(user, "We've lost our connection! Unable to hack airlock.")
-				src.aiHacking=0
-				return
-			to_chat(user, "Upload access confirmed. Loading control program into airlock software.")
-			sleep(170)
-			if(src.canAIControl())
-				to_chat(user, "Alert cancelled. Airlock control has been restored without our assistance.")
-				src.aiHacking=0
-				return
-			else if(!src.canAIHack(user))
-				to_chat(user, "We've lost our connection! Unable to hack airlock.")
-				src.aiHacking=0
-				return
-			to_chat(user, "Transfer complete. Forcing airlock to execute program.")
-			sleep(50)
-			//disable blocked control
-			src.aiControlDisabled = 2
-			to_chat(user, "Receiving control information from airlock.")
-			sleep(10)
-			//bring up airlock dialog
-			src.aiHacking = 0
-			if (user)
-				src.attack_ai(user)
-
 /obj/machinery/door/airlock/CanPass(atom/movable/mover, turf/target, height=0, air_group=0)
 	if (src.isElectrified())
 		if (istype(mover, /obj/item))
@@ -904,13 +859,10 @@ About the new airlock wires panel:
 		to_chat(user, "<span class='warning'>Unable to interface: Internal error.</span>")
 		return STATUS_CLOSE
 	if(issilicon(user) && !src.canAIControl())
-		if(src.canAIHack(user))
-			src.hack(user)
+		if (src.isAllPowerLoss()) //don't really like how this gets checked a second time, but not sure how else to do it.
+			to_chat(user, "<span class='warning'>Unable to interface: Connection timed out.</span>")
 		else
-			if (src.isAllPowerLoss()) //don't really like how this gets checked a second time, but not sure how else to do it.
-				to_chat(user, "<span class='warning'>Unable to interface: Connection timed out.</span>")
-			else
-				to_chat(user, "<span class='warning'>Unable to interface: Connection refused.</span>")
+			to_chat(user, "<span class='warning'>Unable to interface: Connection refused.</span>")
 		return STATUS_CLOSE
 
 	return ..()
@@ -1462,6 +1414,9 @@ About the new airlock wires panel:
 /obj/machinery/door/airlock/proc/stripe_airlock(var/paint_color)
 	stripe_color = paint_color
 	update_icon()
+	
+/obj/machinery/door/airlock/virtual_act(mob/user)
+	attack_ai(user)
 
 // Public access
 

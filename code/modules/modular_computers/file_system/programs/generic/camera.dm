@@ -94,7 +94,7 @@
 			return
 		if(!(current_network in C.network))
 			return
-		if(!AreConnectedZLevels(get_z(C), get_z(host)) && !(get_z(C) in GLOB.using_map.admin_levels))
+		if(!AreConnectedZLevels(get_z(C), get_z(host)) && !(get_z(C) in GLOB.using_map.admin_levels) && !(get_z(C) in SScyberspace.get_linked_cyber(get_z(host))?.connected_zs))
 			to_chat(usr, "Unable to establish a connection.")
 			return
 
@@ -115,17 +115,6 @@
 		return 1
 
 /datum/nano_module/camera_monitor/proc/switch_to_camera(var/mob/user, var/obj/machinery/camera/C)
-	//don't need to check if the camera works for AI because the AI jumps to the camera location and doesn't actually look through cameras.
-	if(isAI(user))
-		var/mob/living/silicon/ai/A = user
-		// Only allow non-carded AIs to view because the interaction with the eye gets all wonky otherwise.
-		if(!A.is_in_chassis())
-			return 0
-
-		A.eyeobj.setLoc(get_turf(C))
-		A.client.eye = A.eyeobj
-		return 1
-
 	set_current(C)
 	return 1
 
@@ -138,15 +127,15 @@
 
 	current_camera = C
 	if(current_camera)
-		var/mob/living/L = current_camera.loc
-		if(istype(L))
-			L.tracking_initiated()
+		var/mob/living/silicon/S = current_camera.loc
+		if(istype(S) && S.has_zeroth_law())
+			to_chat(S, "<span class='warning'>Internal camera is currently being accessed.</span>")
 
 /datum/nano_module/camera_monitor/proc/reset_current()
 	if(current_camera)
-		var/mob/living/L = current_camera.loc
-		if(istype(L))
-			L.tracking_cancelled()
+		var/mob/living/silicon/S = current_camera.loc
+		if(istype(S) && S.has_zeroth_law())
+			to_chat(S, "<span class='notice'>Internal camera is no longer being accessed.</span>")
 	current_camera = null
 
 /datum/nano_module/camera_monitor/check_eye(var/mob/user as mob)

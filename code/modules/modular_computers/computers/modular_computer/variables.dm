@@ -4,6 +4,9 @@
 	name = "Modular Computer"
 	desc = "A modular computer. You shouldn't see this."
 
+	movable_flags = MOVABLE_FLAG_CYBERSPACE
+	cyber_icon_state = "console"
+
 	var/enabled = 0											// Whether the computer is turned on.
 	var/screen_on = 1										// Whether the computer is active/opened/it's screen is on.
 	var/datum/computer_file/program/active_program = null	// A currently active program running on the computer.

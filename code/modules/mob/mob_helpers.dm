@@ -312,7 +312,7 @@ It's fairly easy to fix if dealing with single letters but not so much with comp
 
 
 /proc/shake_camera(mob/M, duration, strength=1)
-	if(!M || !M.client || M.shakecamera || M.stat || isEye(M) || isAI(M))
+	if(!M || !M.client || M.shakecamera || M.stat || isEye(M))
 		return
 	M.shakecamera = 1
 	spawn(1)
@@ -320,16 +320,10 @@ It's fairly easy to fix if dealing with single letters but not so much with comp
 			return
 
 		var/atom/oldeye=M.client.eye
-		var/aiEyeFlag = 0
-		if(istype(oldeye, /mob/observer/eye/aiEye))
-			aiEyeFlag = 1
 
 		var/x
 		for(x=0; x<duration, x++)
-			if(aiEyeFlag)
-				M.client.eye = locate(dd_range(1,oldeye.loc.x+rand(-strength,strength),world.maxx),dd_range(1,oldeye.loc.y+rand(-strength,strength),world.maxy),oldeye.loc.z)
-			else
-				M.client.eye = locate(dd_range(1,M.loc.x+rand(-strength,strength),world.maxx),dd_range(1,M.loc.y+rand(-strength,strength),world.maxy),M.loc.z)
+			M.client.eye = locate(dd_range(1,M.loc.x+rand(-strength,strength),world.maxx),dd_range(1,M.loc.y+rand(-strength,strength),world.maxy),M.loc.z)
 			sleep(1)
 			if(!M.client)
 				return
@@ -472,13 +466,6 @@ proc/is_blind(A)
 	if (!C.can_use() || stat || (get_dist(C, src) > 1 || machine != src || blinded))
 		return 0
 	check_eye(src)
-	return 1
-
-/mob/living/silicon/ai/switch_to_camera(var/obj/machinery/camera/C)
-	if(!C.can_use() || !is_in_chassis())
-		return 0
-
-	eyeobj.setLoc(C)
 	return 1
 
 // Returns true if the mob has a client which has been active in the last given X minutes.

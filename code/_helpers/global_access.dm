@@ -205,12 +205,8 @@
 			return global.adminhelp_ignored_words;
 		if("adminlog")
 			return global.adminlog;
-		if("ai_list")
-			return global.ai_list;
 		if("ai_status_emotions")
 			return global.ai_status_emotions;
-		if("ai_verbs_default")
-			return global.ai_verbs_default;
 		if("air_alarm_topic")
 			return global.air_alarm_topic;
 		if("air_blocked")
@@ -387,8 +383,6 @@
 			return global.dreams;
 		if("dummy_lighting_corner")
 			return global.dummy_lighting_corner;
-		if("empty_playable_ai_cores")
-			return global.empty_playable_ai_cores;
 		if("endgame_exits")
 			return global.endgame_exits;
 		if("endgame_safespawns")
@@ -917,7 +911,7 @@
 			return global.z_levels;
 		if("zone_blocked")
 			return global.zone_blocked;
-		
+
 /proc/writeglobal(which, newval)
 	switch(which)
 		if("ALL_ANTIGENS")
@@ -1124,12 +1118,8 @@
 			global.adminhelp_ignored_words=newval;
 		if("adminlog")
 			global.adminlog=newval;
-		if("ai_list")
-			global.ai_list=newval;
 		if("ai_status_emotions")
 			global.ai_status_emotions=newval;
-		if("ai_verbs_default")
-			global.ai_verbs_default=newval;
 		if("air_alarm_topic")
 			global.air_alarm_topic=newval;
 		if("air_blocked")
@@ -1306,8 +1296,6 @@
 			global.dreams=newval;
 		if("dummy_lighting_corner")
 			global.dummy_lighting_corner=newval;
-		if("empty_playable_ai_cores")
-			global.empty_playable_ai_cores=newval;
 		if("endgame_exits")
 			global.endgame_exits=newval;
 		if("endgame_safespawns")
@@ -1836,7 +1824,7 @@
 			global.z_levels=newval;
 		if("zone_blocked")
 			global.zone_blocked=newval;
-		
+
 /var/list/_all_globals=list(
 	"ALL_ANTIGENS",
 	"ANTAG_FREQS",

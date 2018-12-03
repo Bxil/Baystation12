@@ -170,14 +170,8 @@
 		return 1
 
 	usr.set_machine(src)
-	if (href_list["track"])
-		var/mob/target = locate(href_list["track"])
-		var/mob/living/silicon/ai/A = locate(href_list["track2"])
-		if(A && target)
-			A.ai_actual_track(target)
-		. = 1
 
-	else if (href_list["freq"])
+	if (href_list["freq"])
 		var/new_frequency = (frequency + text2num(href_list["freq"]))
 		if ((new_frequency < PUBLIC_LOW_FREQ || new_frequency > PUBLIC_HIGH_FREQ))
 			new_frequency = sanitize_frequency(new_frequency)
@@ -229,10 +223,10 @@
 		channel = null
 	if (!istype(connection))
 		return
-	var/mob/living/silicon/ai/A = new /mob/living/silicon/ai(src, null, null, 1)
-	A.fully_replace_character_name(from)
-	talk_into(A, message, channel,"states")
-	qdel(A)
+	var/mob/living/silicon/S = new /mob/living/silicon(src, null, null, 1)
+	S.fully_replace_character_name(from)
+	talk_into(S, message, channel,"states")
+	qdel(S)
 
 // Interprets the message mode when talking into a radio, possibly returning a connection datum
 /obj/item/device/radio/proc/handle_message_mode(mob/living/M as mob, message, message_mode)
@@ -476,11 +470,16 @@
 	// Oh my god; the comms are down or something because the signal hasn't been broadcasted yet in our level.
 	// Send a mundane broadcast with limited targets:
 
+	var/target_zs = GetConnectedZlevels(position.z)
+	var/datum/cyberspace/potentional_cyber = SScyberspace.get_linked_cyber(position.z)
+	if(target_zs[1] in potentional_cyber.connected_zs)
+		target_zs += potentional_cyber.z
+
 	//THIS IS TEMPORARY. YEAH RIGHT
 	if(!connection)	return 0	//~Carn
 	return Broadcast_Message(connection, M, voicemask, pick(M.speak_emote),
 					  src, message, displayname, jobname, real_name, M.voice_name,
-					  filter_type, signal.data["compression"], GetConnectedZlevels(position.z), connection.frequency, verb, speaking,
+					  filter_type, signal.data["compression"], target_zs, connection.frequency, verb, speaking,
 					  "[connection.frequency]", channel_color_presets["Menacing Maroon"])
 
 

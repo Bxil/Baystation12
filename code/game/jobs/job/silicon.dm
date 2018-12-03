@@ -2,7 +2,7 @@
 	title = "AI"
 	department_flag = MSC
 
-	total_positions = 0 // Not used for AI, see is_position_available below and modules/mob/living/silicon/ai/latejoin.dm
+	total_positions = 1
 	spawn_positions = 1
 	selection_color = "#3f823f"
 	supervisors = "your laws"
@@ -20,8 +20,12 @@
 	if(!H)	return 0
 	return 1
 
-/datum/job/ai/is_position_available()
-	return (empty_playable_ai_cores.len != 0)
+/datum/job/ai/is_available(var/client/caller)
+	. = ..()
+	if(.)
+		var/datum/cyberspace/C = SScyberspace.get_linked_cyber(GLOB.using_map.station_levels[1])
+		if(!C || !C.exits.len)
+			return FALSE
 
 /datum/job/ai/handle_variant_join(var/mob/living/carbon/human/H, var/alt_title)
 	return H

@@ -1,0 +1,18 @@
+"a" = (/turf/unsimulated/cyber/floor,/area/template_noop)
+"b" = (/turf/unsimulated/cyber/wall,/area/template_noop)
+
+(1,1,1) = {"
+aaaaababaaaaa
+aaaaababaaaaa
+aaaaaaaaaaaaa
+aaaaababaaaaa
+aaaaababaaaaa
+bbabbbabbbabb
+aaaaaaaaaaaaa
+bbabbbabbbabb
+aaaaababaaaaa
+aaaaababaaaaa
+aaaaaaaaaaaaa
+aaaaababaaaaa
+aaaaababaaaaa
+"}

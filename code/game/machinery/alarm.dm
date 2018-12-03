@@ -63,6 +63,9 @@
 
 	layer = ABOVE_WINDOW_LAYER
 
+	movable_flags = MOVABLE_FLAG_CYBERSPACE
+	cyber_icon_state = "gas"
+
 	var/alarm_id = null
 	var/breach_detection = 1 // Whether to use automatic breach detection or not
 	var/frequency = 1439

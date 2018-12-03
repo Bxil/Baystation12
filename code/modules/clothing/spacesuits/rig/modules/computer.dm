@@ -82,31 +82,6 @@
 	else
 		target_ai = locate(/mob/living/silicon/ai) in input_device.contents
 
-	var/obj/item/weapon/aicard/card = ai_card
-
-	// Downloading from/loading to a terminal.
-	if(istype(input_device,/mob/living/silicon/ai) || istype(input_device,/obj/structure/AIcore/deactivated))
-
-		// If we're stealing an AI, make sure we have a card for it.
-		if(!card)
-			card = new /obj/item/weapon/aicard(src)
-
-		// Terminal interaction only works with an inteliCarded AI.
-		if(!istype(card))
-			return 0
-
-		// Since we've explicitly checked for three types, this should be safe.
-		input_device.attackby(card,user)
-
-		// If the transfer failed we can delete the card.
-		if(locate(/mob/living/silicon/ai) in card)
-			ai_card = card
-			integrated_ai = locate(/mob/living/silicon/ai) in card
-		else
-			eject_ai()
-		update_verb_holder()
-		return 1
-
 	if(istype(input_device,/obj/item/weapon/aicard))
 		// We are carding the AI in our suit.
 		if(integrated_ai)

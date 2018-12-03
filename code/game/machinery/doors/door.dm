@@ -567,6 +567,10 @@
 		toggle()
 	return TRUE
 
+/obj/machinery/door/virtual_act(mob/user)
+	if(alert(user, "[density ? "Open" : "Close"] \the [src]?",, "Yes", "No") == "Yes")
+		attack_ai(user)
+
 // Public access
 
 /decl/public_access/public_method/open_door

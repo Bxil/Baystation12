@@ -3,6 +3,10 @@
 	desc = "A strong door."
 	icon = 'icons/obj/doors/windoor.dmi'
 	icon_state = "left"
+
+	movable_flags = MOVABLE_FLAG_CYBERSPACE
+	cyber_icon_state = "windoor"
+
 	var/base_state = "left"
 	min_force = 4
 	hitsound = 'sound/effects/Glasshit.ogg'

@@ -16,6 +16,9 @@
 var/global/list/obj/machinery/telecomms/telecomms_list = list()
 
 /obj/machinery/telecomms
+	movable_flags = MOVABLE_FLAG_CYBERSPACE
+	cyber_icon_state = "tcomms"
+
 	var/list/links = list() // list of machines this machine is linked to
 	var/traffic = 0 // value increases as traffic increases
 	var/netspeed = 5 // how much traffic to lose per tick (50 gigabytes/second * netspeed)
@@ -121,11 +124,7 @@ var/global/list/obj/machinery/telecomms/telecomms_list = list()
 	..()
 
 /obj/machinery/telecomms/Initialize()
-	//Set the listening_levels if there's none.
-	if(!listening_levels)
-		//Defaults to our Z level!
-		var/turf/position = get_turf(src)
-		listening_levels = GetConnectedZlevels(position.z)
+	set_listening_levels()
 
 	if(autolinkers.len)
 		// Links nearby machines
@@ -163,12 +162,12 @@ var/global/list/obj/machinery/telecomms/telecomms_list = list()
 
 /obj/machinery/telecomms/Move()
 	. = ..()
-	listening_levels = GetConnectedZlevels(z)
+	set_listening_levels()
 	update_power()
 
-/obj/machinery/telecomms/forceMove(var/newloc)
-	. = ..(newloc)
-	listening_levels = GetConnectedZlevels(z)
+/obj/machinery/telecomms/forceMove(newloc)
+	. = ..()
+	set_listening_levels()
 	update_power()
 
 /obj/machinery/telecomms/proc/update_power()
@@ -180,6 +179,15 @@ var/global/list/obj/machinery/telecomms/telecomms_list = list()
 	else
 		on = 0
 	update_use_power(on)
+
+/obj/machinery/telecomms/proc/set_listening_levels()
+	//Defaults to our Z level!
+	listening_levels = GetConnectedZlevels(get_z(src))
+
+	//Do we have a cyber z connected to us?
+	var/datum/cyberspace/C = SScyberspace.get_linked_cyber(get_z(src))
+	if(C)
+		listening_levels += C.z
 
 /obj/machinery/telecomms/Process()
 	update_power()

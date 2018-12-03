@@ -130,7 +130,6 @@
 	minimal_access = list()
 
 	software_on_spawn = list(/datum/computer_file/program/comm,
-							 /datum/computer_file/program/aidiag,
 							 /datum/computer_file/program/camera_monitor,
 							 /datum/computer_file/program/reports)
 

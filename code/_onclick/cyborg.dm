@@ -119,36 +119,55 @@
 /atom/proc/BorgCtrlShiftClick(var/mob/living/silicon/robot/user) //forward to human click if not overriden
 	CtrlShiftClick(user)
 
-/obj/machinery/door/airlock/BorgCtrlShiftClick()
-	AICtrlShiftClick()
-
 /atom/proc/BorgShiftClick(var/mob/living/silicon/robot/user) //forward to human click if not overriden
 	ShiftClick(user)
-
-/obj/machinery/door/airlock/BorgShiftClick()  // Opens and closes doors! Forwards to AI code.
-	AIShiftClick()
 
 /atom/proc/BorgCtrlClick(var/mob/living/silicon/robot/user) //forward to human click if not overriden
 	return CtrlClick(user)
 
-/obj/machinery/door/airlock/BorgCtrlClick() // Bolts doors. Forwards to AI code.
-	return AICtrlClick()
+/obj/machinery/door/airlock/BorgCtrlClick()
+	if(usr.incapacitated())
+		return
+	if(!electrified_until)
+		// permanent shock
+		Topic(src, list("command"="electrify_permanently", "activate" = "1"))
+	else
+		// disable/6 is not in Topic; disable/5 disables both temporary and permanent shock
+		Topic(src, list("command"="electrify_permanently", "activate" = "0"))
+	return 1
 
-/obj/machinery/power/apc/BorgCtrlClick() // turns off/on APCs. Forwards to AI code.
-	return AICtrlClick()
+/obj/machinery/power/apc/BorgCtrlClick()
+	if(usr.incapacitated())
+		return FALSE
+	Topic(src, list("breaker"="1"))
+	return TRUE
 
-/obj/machinery/turretid/BorgCtrlClick() //turret control on/off. Forwards to AI code.
-	return AICtrlClick()
+/obj/machinery/turretid/BorgCtrlClick()
+	if(usr.incapacitated())
+		return FALSE
+	Topic(src, list("command"="enable", "value"="[!enabled]"))
+	return TRUE
 
 /atom/proc/BorgAltClick(var/mob/living/silicon/robot/user)
 	AltClick(user)
 	return
 
-/obj/machinery/door/airlock/BorgAltClick() // Eletrifies doors. Forwards to AI code.
-	AICtrlAltClick()
+/obj/machinery/door/airlock/BorgAltClick()  // Electrifies doors.
+	if(usr.incapacitated())
+		return
+	if(!electrified_until)
+		// permanent shock
+		Topic(src, list("command"="electrify_permanently", "activate" = "1"))
+	else
+		// disable/6 is not in Topic; disable/5 disables both temporary and permanent shock
+		Topic(src, list("command"="electrify_permanently", "activate" = "0"))
+	return 1
 
-/obj/machinery/turretid/BorgAltClick() //turret lethal on/off. Forwards to AI code.
-	AIAltClick()
+/obj/machinery/turretid/BorgAltClick() //toggles lethal on turrets
+	if(usr.incapacitated())
+		return
+	Topic(src, list("command"="lethal", "value"="[!lethal]"))
+	return 1
 
 /obj/machinery/atmospherics/binary/pump/BorgAltClick()
 	return AltClick()

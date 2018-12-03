@@ -4,6 +4,7 @@ SUBSYSTEM_DEF(mapping)
 	flags = SS_NO_FIRE
 
 	var/list/map_templates = list()
+	var/list/cyber_templates = list()
 	var/list/space_ruins_templates = list()
 	var/list/exoplanet_ruins_templates = list()
 	var/list/away_sites_templates = list()
@@ -12,7 +13,9 @@ SUBSYSTEM_DEF(mapping)
 
 /datum/controller/subsystem/mapping/Initialize(timeofday)
 	// Load templates and build away sites.
-	preloadTemplates()
+	preloadTemplates("maps/templates/", map_templates)
+	preloadTemplates("maps/cyber/", cyber_templates)
+	preloadBlacklistableTemplates()
 	for(var/atype in subtypesof(/decl/submap_archetype))
 		submap_archetypes[atype] = new atype
 	GLOB.using_map.build_away_sites()
@@ -25,12 +28,11 @@ SUBSYSTEM_DEF(mapping)
 	exoplanet_ruins_templates = SSmapping.exoplanet_ruins_templates
 	away_sites_templates = SSmapping.away_sites_templates
 
-/datum/controller/subsystem/mapping/proc/preloadTemplates(path = "maps/templates/") //see master controller setup
+/datum/controller/subsystem/mapping/proc/preloadTemplates(path, list/target)
 	var/list/filelist = flist(path)
 	for(var/map in filelist)
-		var/datum/map_template/T = new(path = "[path][map]", rename = "[map]")
-		map_templates[T.name] = T
-	preloadBlacklistableTemplates()
+		var/datum/map_template/T = new(list("[path][map]"), "[map]")
+		target[T.name] = T
 
 /datum/controller/subsystem/mapping/proc/preloadBlacklistableTemplates()
 	// Still supporting bans by filename

@@ -320,24 +320,14 @@
 	character = SSjobs.equip_rank(character, job.title, 1)					//equips the human
 	equip_custom_items(character)
 
-	// AIs don't need a spawnpoint, they must spawn at an empty core
+	// AIs don't need a spawnpoint, they must spawn at a cyberspace exit
 	if(character.mind.assigned_role == "AI")
 
-		character = character.AIize(move=0) // AIize the character, but don't move them yet
+		character = character.AIize()
+		if(character) //If character is null AIize have failed.
+			AnnounceCyborg(character, job.title, "has been downloaded to the [station_name()] CyberNet")
+			SSticker.mode.handle_latejoin(character)
 
-		// is_available for AI checks that there is an empty core available in this list
-		var/obj/structure/AIcore/deactivated/C = empty_playable_ai_cores[1]
-		empty_playable_ai_cores -= C
-
-		character.forceMove(C.loc)
-		var/mob/living/silicon/ai/A = character
-		A.on_mob_init()
-
-		AnnounceCyborg(character, job.title, "has been downloaded to the empty core in \the [character.loc.loc]")
-		SSticker.mode.handle_latejoin(character)
-
-		qdel(C)
-		qdel(src)
 		return
 
 	SSticker.mode.handle_latejoin(character)

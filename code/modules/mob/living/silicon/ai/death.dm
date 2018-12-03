@@ -1,21 +1,22 @@
 /mob/living/silicon/ai/death(gibbed, deathmessage, show_dead_message)
-
 	if(stat == DEAD)
 		return
+	remove_ai_verbs()
 
-	if(src.eyeobj)
-		src.eyeobj.setLoc(get_turf(src))
-
-
-	stop_malf(0) // Remove AI's malfunction status, that will fix all hacked APCs, disable delta, etc.
-	remove_ai_verbs(src)
+	for(var/obj/cyber/node/N in nodes)
+		N.remove_owner()
 
 	for(var/obj/machinery/ai_status_display/O in world)
 		O.mode = 2
+
+	icon_state = icon_dead
+	LAZYREMOVE(cyberspace.intelligences, src)
 
 	if (istype(loc, /obj/item/weapon/aicard))
 		var/obj/item/weapon/aicard/card = loc
 		card.update_icon()
 
-	. = ..(gibbed,"gives one shrill beep before falling lifeless.", "You have suffered a critical system failure, and are dead.")
-	set_density(1)
+	if(real)
+		mind.transfer_to(real)
+		real.teleop = null
+	. = ..()
